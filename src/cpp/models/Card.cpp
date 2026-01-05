@@ -3,7 +3,13 @@
 
 Card::Card()
 {
-
+    id = 0;
+    question = QString();
+    answer = QString();
+    easyFactor = 0.0f;
+    intervalDays = 0;
+    repetitions = 0;
+    deckId = 0;
 }
 
 Card::Card(int id, const QString &question, const QString &answer, ContentType contentType, TestMode testMode, float easyFactor, int intervalDays, int repetitions, const QDateTime &nextReview, const QDateTime &lastReview, int deckId) : id(id),
