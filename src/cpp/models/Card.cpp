@@ -12,7 +12,8 @@ Card::Card()
     deckId = 0;
 }
 
-Card::Card(int id, const QString &question, const QString &answer, ContentType contentType, TestMode testMode, float easyFactor, int intervalDays, int repetitions, const QDateTime &nextReview, const QDateTime &lastReview, int deckId) : id(id),
+Card::Card(int id, const QString &question, const QString &answer, ContentType contentType, TestMode testMode, float easyFactor, int intervalDays, int repetitions, const QDateTime &nextReview, const QDateTime &lastReview, int deckId) :
+    id(id),
     question(question),
     answer(answer),
     contentType(contentType),
@@ -25,10 +26,19 @@ Card::Card(int id, const QString &question, const QString &answer, ContentType c
     deckId(deckId)
 {}
 
-Card::~Card()
-{
-
-}
+Card::Card(const Card& other) :
+    id(other.id),
+    question(other.question),
+    answer(other.answer),
+    contentType(other.contentType),
+    testMode(other.testMode),
+    easyFactor(other.easyFactor),
+    intervalDays(other.intervalDays),
+    repetitions(other.repetitions),
+    nextReview(other.nextReview),
+    lastReview(other.lastReview),
+    deckId(other.deckId)
+{}
 
 int Card::getId()
 {

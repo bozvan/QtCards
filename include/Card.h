@@ -15,7 +15,8 @@ class Card
 public:
     Card();
     Card(int id, const QString &question, const QString &answer, ContentType contentType, TestMode testMode, float easyFactor, int intervalDays, int repetitions, const QDateTime &nextReview, const QDateTime &lastReview, int deckId);
-    ~Card();
+    Card(const Card& other);
+    ~Card() = default;
 
     // GETTERS
     int getId();

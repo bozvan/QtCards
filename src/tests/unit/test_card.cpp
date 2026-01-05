@@ -7,11 +7,12 @@
 class TestCard : public QObject {
     Q_OBJECT
 private slots:
-    // Конструкторы
+    // Constructor tests
     void testDefaultConstructor();
     void testParameterizedConstructor();
+    void testCopyConstructor();
 
-    // Тесты для сеттеров
+    // Setter tests
     void testSetId();
     void testSetQuestion();
     void testSetAnswer();
@@ -24,7 +25,7 @@ private slots:
     void testSetLastReview();
     void testSetDeckId();
 
-    // Тесты для геттеров
+    // Getter tests
     void testGetId();
     void testGetQuestion();
     void testGetAnswer();
@@ -37,13 +38,13 @@ private slots:
     void testGetLastReview();
     void testGetDeckId();
 
-    // Интеграционные тесты
+    // Integration tests
     void testSetAndGetConsistency();
     void testEdgeCases();
 };
 
 
-// ==================== КОНСТРУКТОРЫ ====================
+// ==================== CONSTRUCTORS ====================
 void TestCard::testDefaultConstructor() {
     Card card;
     QCOMPARE(card.getId(), 0);
@@ -75,7 +76,58 @@ void TestCard::testParameterizedConstructor() {
     QCOMPARE(card.getDeckId(), 10);
 }
 
-// ==================== СЕТТЕРЫ ====================
+void TestCard::testCopyConstructor() {
+    QDateTime nextReview = QDateTime::currentDateTime().addDays(2);
+    QDateTime lastReview = QDateTime::currentDateTime().addDays(-2);
+
+    Card original(100, "Original question?", "Original answer.",
+                  ContentType::Audio, TestMode::Matching,
+                  2.0f, 14, 5, nextReview, lastReview, 50);
+
+    Card copy(original);
+
+    QCOMPARE(copy.getId(), original.getId());
+    QCOMPARE(copy.getQuestion(), original.getQuestion());
+    QCOMPARE(copy.getAnswer(), original.getAnswer());
+    QCOMPARE(copy.getContentType(), original.getContentType());
+    QCOMPARE(copy.getTestMode(), original.getTestMode());
+    QVERIFY(qFuzzyCompare(copy.getEasyFactor(), original.getEasyFactor()));
+    QCOMPARE(copy.getIntervalDays(), original.getIntervalDays());
+    QCOMPARE(copy.getRepetitions(), original.getRepetitions());
+    QCOMPARE(copy.getNextReview(), original.getNextReview());
+    QCOMPARE(copy.getLastReview(), original.getLastReview());
+    QCOMPARE(copy.getDeckId(), original.getDeckId());
+
+    // Проверяем глубокое копирование (изменение копии не влияет на оригинал)
+    copy.setQuestion("Modified question");
+    QVERIFY(copy.getQuestion() != original.getQuestion());
+    QCOMPARE(original.getQuestion(), QString("Original question?"));
+
+    copy.setId(999);
+    QVERIFY(copy.getId() != original.getId());
+    QCOMPARE(original.getId(), 100);
+
+    // Проверяем с пустыми значениями
+    Card emptyOriginal;
+    Card emptyCopy(emptyOriginal);
+
+    QCOMPARE(emptyCopy.getId(), 0);
+    QCOMPARE(emptyCopy.getQuestion(), QString());
+    QCOMPARE(emptyCopy.getAnswer(), QString());
+
+    // Проверяем с граничными значениями
+    Card edgeCase(INT_MAX, "", "", ContentType::Text, TestMode::DirectAnswer,
+                  -100.0f, INT_MIN, INT_MAX, QDateTime(), QDateTime(), INT_MIN);
+    Card edgeCopy(edgeCase);
+
+    QCOMPARE(edgeCopy.getId(), INT_MAX);
+    QCOMPARE(edgeCopy.getIntervalDays(), INT_MIN);
+    QCOMPARE(edgeCopy.getRepetitions(), INT_MAX);
+    QCOMPARE(edgeCopy.getDeckId(), INT_MIN);
+    QVERIFY(qFuzzyCompare(edgeCopy.getEasyFactor(), -100.0f));
+}
+
+// ==================== SETTERS ====================
 void TestCard::testSetId() {
     Card card;
     card.setId(42);
@@ -144,7 +196,7 @@ void TestCard::testSetDeckId() {
     QVERIFY(card.getDeckId() == 99);
 }
 
-// ==================== ГЕТТЕРЫ ====================
+// ==================== GETTERS ====================
 void TestCard::testGetId() {
     Card card(42, "", "", ContentType::Text, TestMode::DirectAnswer,
               0.0f, 0, 0, QDateTime(), QDateTime(), 0);
@@ -213,11 +265,10 @@ void TestCard::testGetDeckId() {
     QCOMPARE(card.getDeckId(), 25);
 }
 
-// ==================== ИНТЕГРАЦИОННЫЕ ТЕСТЫ ====================
+// ==================== INTEGRATION TESTS ====================
 void TestCard::testSetAndGetConsistency() {
     Card card;
 
-    // Устанавливаем все значения
     card.setId(100);
     card.setQuestion("Consistency test?");
     card.setAnswer("Yes");
@@ -233,7 +284,7 @@ void TestCard::testSetAndGetConsistency() {
     card.setLastReview(last);
     card.setDeckId(50);
 
-    // Проверяем согласованность
+    // Checking
     QCOMPARE(card.getId(), 100);
     QCOMPARE(card.getQuestion(), "Consistency test?");
     QCOMPARE(card.getAnswer(), "Yes");
