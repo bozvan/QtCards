@@ -40,6 +40,7 @@ Card::Card(const Card& other) :
     deckId(other.deckId)
 {}
 
+
 int Card::getId()
 {
     return id;
@@ -148,4 +149,26 @@ void Card::setLastReview(QDateTime lastReview)
 void Card::setDeckId(int deckId)
 {
     this->deckId = deckId;
+}
+
+void Card::swap(Card& other) noexcept {
+    using std::swap;
+    swap(id, other.id);
+    swap(question, other.question);
+    swap(answer, other.answer);
+    swap(contentType, other.contentType);
+    swap(testMode, other.testMode);
+    swap(easyFactor, other.easyFactor);
+    swap(intervalDays, other.intervalDays);
+    swap(repetitions, other.repetitions);
+    swap(nextReview, other.nextReview);
+    swap(lastReview, other.lastReview);
+    swap(deckId, other.deckId);
+}
+
+
+Card& Card::operator=(const Card& other) {
+    Card temp(other);
+    swap(temp);
+    return *this;
 }

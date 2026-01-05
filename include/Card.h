@@ -44,6 +44,9 @@ public:
     void setLastReview(QDateTime lastReview);
     void setDeckId(int deckId);
 
+    void swap(Card& other) noexcept;
+    Card& operator=(const Card& other);
+
 private:
     int id;
     QString question;
