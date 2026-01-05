@@ -81,8 +81,7 @@ CMakeLists.txt.user*
 .uic/
 /build*/
 
-CMakeLists.txt
-src/cpp/tests/CMakeLists.txt
+
 html/
 latex/
 Doxyfile
