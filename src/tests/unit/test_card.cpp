@@ -11,6 +11,15 @@ private slots:
     void testDefaultConstructor();
     void testParameterizedConstructor();
     void testCopyConstructor();
+    void testCopyAssignmentOperator();
+    void testMoveConstructor();
+    void testMoveAssignmentOperator();
+    void testMoveFromTemporary();
+    void testMoveSelfAssignment();
+    void testMoveEmptyObject();
+    void testMoveAfterCopy();
+    void testMovePerformance();
+    void testMoveThenUseSource();
 
     // Setter tests
     void testSetId();
@@ -125,6 +134,284 @@ void TestCard::testCopyConstructor() {
     QCOMPARE(edgeCopy.getRepetitions(), INT_MAX);
     QCOMPARE(edgeCopy.getDeckId(), INT_MIN);
     QVERIFY(qFuzzyCompare(edgeCopy.getEasyFactor(), -100.0f));
+}
+
+void TestCard::testCopyAssignmentOperator() {
+    // Arrange
+    QDateTime next1 = QDateTime::currentDateTime().addDays(1);
+    QDateTime last1 = QDateTime::currentDateTime().addDays(-1);
+    Card card1(1, "Original Question", "Original Answer",
+               ContentType::Text, TestMode::DirectAnswer,
+               1.5f, 7, 3, next1, last1, 10);
+
+    QDateTime next2 = QDateTime::currentDateTime().addDays(2);
+    QDateTime last2 = QDateTime::currentDateTime().addDays(-2);
+    Card card2(2, "New Question", "New Answer",
+               ContentType::Image, TestMode::MultipleChoice,
+               2.0f, 14, 5, next2, last2, 20);
+
+    // Act
+    card1 = card2; // Copy assignment
+
+    // Assert
+    QCOMPARE(card1.getId(), 2);
+    QCOMPARE(card1.getQuestion(), "New Question");
+    QCOMPARE(card1.getAnswer(), "New Answer");
+    QCOMPARE(card1.getContentType(), ContentType::Image);
+    QCOMPARE(card1.getTestMode(), TestMode::MultipleChoice);
+    QVERIFY(qFuzzyCompare(card1.getEasyFactor(), 2.0f));
+    QCOMPARE(card1.getIntervalDays(), 14);
+    QCOMPARE(card1.getRepetitions(), 5);
+    QCOMPARE(card1.getNextReview(), next2);
+    QCOMPARE(card1.getLastReview(), last2);
+    QCOMPARE(card1.getDeckId(), 20);
+
+    // Source should remain unchanged
+    QCOMPARE(card2.getId(), 2);
+    QCOMPARE(card2.getQuestion(), "New Question");
+}
+
+void TestCard::testMoveConstructor() {
+    // Arrange
+    QDateTime next = QDateTime::currentDateTime().addDays(1);
+    QDateTime last = QDateTime::currentDateTime().addDays(-1);
+
+    // Act - создаем временный объект и перемещаем его
+    Card source(1, "Move Source", "Move Answer",
+                ContentType::Audio, TestMode::Matching,
+                2.5f, 30, 10, next, last, 50);
+
+    Card destination(std::move(source));
+
+    // Assert - destination должен получить значения
+    QCOMPARE(destination.getId(), 1);
+    QCOMPARE(destination.getQuestion(), "Move Source");
+    QCOMPARE(destination.getAnswer(), "Move Answer");
+    QCOMPARE(destination.getContentType(), ContentType::Audio);
+    QCOMPARE(destination.getTestMode(), TestMode::Matching);
+    QVERIFY(qFuzzyCompare(destination.getEasyFactor(), 2.5f));
+    QCOMPARE(destination.getIntervalDays(), 30);
+    QCOMPARE(destination.getRepetitions(), 10);
+    QCOMPARE(destination.getNextReview(), next);
+    QCOMPARE(destination.getLastReview(), last);
+    QCOMPARE(destination.getDeckId(), 50);
+
+    // Source должен быть в валидном, но перемещенном состоянии
+    QCOMPARE(source.getId(), 0);
+    QCOMPARE(source.getQuestion(), QString());
+    QCOMPARE(source.getAnswer(), QString());
+    QCOMPARE(source.getIntervalDays(), 0);
+    QCOMPARE(source.getRepetitions(), 0);
+    QCOMPARE(source.getDeckId(), 0);
+    // Enum значения остаются как есть (не обнуляются)
+}
+
+void TestCard::testMoveAssignmentOperator() {
+    // Arrange
+    QDateTime next1 = QDateTime::currentDateTime().addDays(1);
+    QDateTime last1 = QDateTime::currentDateTime().addDays(-1);
+    Card card1(1, "Card 1", "Answer 1",
+               ContentType::Text, TestMode::DirectAnswer,
+               1.3f, 5, 2, next1, last1, 10);
+
+    QDateTime next2 = QDateTime::currentDateTime().addDays(2);
+    QDateTime last2 = QDateTime::currentDateTime().addDays(-2);
+    Card card2(2, "Card 2", "Answer 2",
+               ContentType::Image, TestMode::MultipleChoice,
+               2.1f, 10, 4, next2, last2, 20);
+
+    // Act
+    card1 = std::move(card2); // Move assignment
+
+    // Assert - card1 получает значения card2
+    QCOMPARE(card1.getId(), 2);
+    QCOMPARE(card1.getQuestion(), "Card 2");
+    QCOMPARE(card1.getAnswer(), "Answer 2");
+    QCOMPARE(card1.getContentType(), ContentType::Image);
+    QCOMPARE(card1.getTestMode(), TestMode::MultipleChoice);
+    QVERIFY(qFuzzyCompare(card1.getEasyFactor(), 2.1f));
+    QCOMPARE(card1.getIntervalDays(), 10);
+    QCOMPARE(card1.getRepetitions(), 4);
+    QCOMPARE(card1.getNextReview(), next2);
+    QCOMPARE(card1.getLastReview(), last2);
+    QCOMPARE(card1.getDeckId(), 20);
+
+    // card2 должен быть в перемещенном состоянии
+    QCOMPARE(card2.getId(), 0);
+    QCOMPARE(card2.getIntervalDays(), 0);
+    QCOMPARE(card2.getRepetitions(), 0);
+    QCOMPARE(card2.getDeckId(), 0);
+}
+
+void TestCard::testMoveFromTemporary() {
+    // Arrange & Act - создаем и сразу перемещаем временный объект
+    Card card = Card(3, "Temporary", "Temp Answer",
+                     ContentType::Audio, TestMode::Matching,
+                     3.0f, 21, 7,
+                     QDateTime::currentDateTime(),
+                     QDateTime::currentDateTime().addDays(-1),
+                     30);
+
+    // Assert
+    QCOMPARE(card.getId(), 3);
+    QCOMPARE(card.getQuestion(), "Temporary");
+    QCOMPARE(card.getAnswer(), "Temp Answer");
+    QCOMPARE(card.getContentType(), ContentType::Audio);
+    QCOMPARE(card.getTestMode(), TestMode::Matching);
+    QVERIFY(qFuzzyCompare(card.getEasyFactor(), 3.0f));
+    QCOMPARE(card.getIntervalDays(), 21);
+    QCOMPARE(card.getRepetitions(), 7);
+    QCOMPARE(card.getDeckId(), 30);
+}
+
+void TestCard::testMoveSelfAssignment() {
+    // Arrange
+    QDateTime next = QDateTime::currentDateTime().addDays(1);
+    QDateTime last = QDateTime::currentDateTime().addDays(-1);
+    Card card(1, "Self Assignment", "Test",
+              ContentType::Text, TestMode::DirectAnswer,
+              1.5f, 7, 3, next, last, 10);
+
+    // Act - self move assignment
+    card = std::move(card);
+
+    // Assert - объект должен остаться в валидном состоянии
+    QCOMPARE(card.getId(), 1);
+    QCOMPARE(card.getQuestion(), "Self Assignment");
+    QCOMPARE(card.getAnswer(), "Test");
+    QCOMPARE(card.getContentType(), ContentType::Text);
+    QCOMPARE(card.getTestMode(), TestMode::DirectAnswer);
+    QVERIFY(qFuzzyCompare(card.getEasyFactor(), 1.5f));
+    QCOMPARE(card.getIntervalDays(), 7);
+    QCOMPARE(card.getRepetitions(), 3);
+    QCOMPARE(card.getNextReview(), next);
+    QCOMPARE(card.getLastReview(), last);
+    QCOMPARE(card.getDeckId(), 10);
+}
+
+void TestCard::testMoveEmptyObject() {
+    // Arrange
+    Card emptySource; // Default constructor
+    Card destination(1, "Not Empty", "Has Data",
+                     ContentType::Text, TestMode::DirectAnswer,
+                     1.0f, 1, 1, QDateTime(), QDateTime(), 1);
+
+    // Act - перемещаем пустой объект
+    destination = std::move(emptySource);
+
+    // Assert - destination становится пустым
+    QCOMPARE(destination.getId(), 0);
+    QCOMPARE(destination.getQuestion(), QString());
+    QCOMPARE(destination.getAnswer(), QString());
+    QCOMPARE(destination.getEasyFactor(), 0.0f);
+    QCOMPARE(destination.getIntervalDays(), 0);
+    QCOMPARE(destination.getRepetitions(), 0);
+    QCOMPARE(destination.getDeckId(), 0);
+
+    // Source становится еще более пустым (хотя уже был пустым)
+    QCOMPARE(emptySource.getId(), 0);
+}
+
+void TestCard::testMoveAfterCopy() {
+    // ArrangeC
+    QDateTime next = QDateTime::currentDateTime().addDays(1);
+    QDateTime last = QDateTime::currentDateTime().addDays(-1);
+
+    Card original(1, "Original", "Data",
+                  ContentType::Image, TestMode::MultipleChoice,
+                  2.0f, 14, 5, next, last, 20);
+
+    // Act - сначала копируем, затем перемещаем
+    Card copy = original; // Copy constructor
+    Card moved = std::move(copy); // Move constructor
+
+    // Assert - moved содержит данные оригинала
+    QCOMPARE(moved.getId(), 1);
+    QCOMPARE(moved.getQuestion(), "Original");
+    QCOMPARE(moved.getContentType(), ContentType::Image);
+    QCOMPARE(moved.getTestMode(), TestMode::MultipleChoice);
+    QVERIFY(qFuzzyCompare(moved.getEasyFactor(), 2.0f));
+    QCOMPARE(moved.getIntervalDays(), 14);
+    QCOMPARE(moved.getRepetitions(), 5);
+    QCOMPARE(moved.getNextReview(), next);
+    QCOMPARE(moved.getLastReview(), last);
+    QCOMPARE(moved.getDeckId(), 20);
+
+    // copy теперь в перемещенном состоянии
+    QCOMPARE(copy.getId(), 0);
+    QCOMPARE(copy.getQuestion(), QString());
+    QCOMPARE(copy.getIntervalDays(), 0);
+    QCOMPARE(copy.getRepetitions(), 0);
+    QCOMPARE(copy.getDeckId(), 0);
+
+    // original остается неизменным
+    QCOMPARE(original.getId(), 1);
+    QCOMPARE(original.getQuestion(), "Original");
+}
+
+void TestCard::testMovePerformance() {
+    // Arrange - создаем объект с большими строками
+    QString longQuestion(10000, 'Q'); // 10К символов
+    QString longAnswer(10000, 'A');   // 10К символов
+
+    Card source(1, longQuestion, longAnswer,
+                ContentType::Text, TestMode::DirectAnswer,
+                1.5f, 7, 3, QDateTime(), QDateTime(), 10);
+
+    // Act - перемещаем (должно быть быстро, без копирования строк)
+    auto start = std::chrono::high_resolution_clock::now();
+    Card destination = std::move(source);
+    auto end = std::chrono::high_resolution_clock::now();
+
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+    // Assert - данные переместились
+    QCOMPARE(destination.getQuestion(), longQuestion);
+    QCOMPARE(destination.getAnswer(), longAnswer);
+
+    // Source должен быть пустым (или содержать пустые строки)
+    QVERIFY(source.getQuestion().isEmpty());
+    QVERIFY(source.getAnswer().isEmpty());
+
+    // Можно залогировать время, но обычно не делают assertions на время
+    qDebug() << "Move operation took:" << duration.count() << "microseconds";
+}
+
+void TestCard::testMoveThenUseSource() {
+    // Arrange
+    Card source(1, "Source Data", "Source Answer",
+                ContentType::Audio, TestMode::Matching,
+                2.5f, 30, 10, QDateTime(), QDateTime(), 50);
+
+    // Act - перемещаем, затем используем источник
+    Card destination = std::move(source);
+
+    // Source теперь в перемещенном состоянии, но мы можем его использовать
+    source.setId(100);
+    source.setQuestion("New Question After Move");
+    source.setAnswer("New Answer After Move");
+    source.setEasyFactor(5.0f);
+    source.setIntervalDays(100);
+    source.setRepetitions(20);
+    source.setDeckId(200);
+
+    // Assert - destination не изменился
+    QCOMPARE(destination.getId(), 1);
+    QCOMPARE(destination.getQuestion(), "Source Data");
+    QCOMPARE(destination.getAnswer(), "Source Answer");
+    QVERIFY(qFuzzyCompare(destination.getEasyFactor(), 2.5f));
+    QCOMPARE(destination.getIntervalDays(), 30);
+    QCOMPARE(destination.getRepetitions(), 10);
+    QCOMPARE(destination.getDeckId(), 50);
+
+    // Source имеет новые значения
+    QCOMPARE(source.getId(), 100);
+    QCOMPARE(source.getQuestion(), "New Question After Move");
+    QCOMPARE(source.getAnswer(), "New Answer After Move");
+    QVERIFY(qFuzzyCompare(source.getEasyFactor(), 5.0f));
+    QCOMPARE(source.getIntervalDays(), 100);
+    QCOMPARE(source.getRepetitions(), 20);
+    QCOMPARE(source.getDeckId(), 200);
 }
 
 // ==================== SETTERS ====================

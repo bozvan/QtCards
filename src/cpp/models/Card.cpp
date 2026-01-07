@@ -40,6 +40,19 @@ Card::Card(const Card& other) :
     deckId(other.deckId)
 {}
 
+Card::Card(Card&& other) noexcept :
+    id(std::exchange(other.id, 0)),
+    question(std::move(other.question)),
+    answer(std::move(other.answer)),
+    contentType(other.contentType),
+    testMode(other.testMode),
+    easyFactor(other.easyFactor),
+    intervalDays(std::exchange(other.intervalDays, 0)),
+    repetitions(std::exchange(other.repetitions, 0)),
+    nextReview(std::move(other.nextReview)),
+    lastReview(std::move(other.lastReview)),
+    deckId(std::exchange(other.deckId, 0))
+{}
 
 int Card::getId()
 {
@@ -170,5 +183,23 @@ void Card::swap(Card& other) noexcept {
 Card& Card::operator=(const Card& other) {
     Card temp(other);
     swap(temp);
+    return *this;
+}
+
+Card& Card::operator=(Card&& other) noexcept
+{
+    if (this != &other) {
+        id = std::exchange(other.id, 0);
+        question = std::move(other.question);
+        answer = std::move(other.answer);
+        contentType = other.contentType;
+        testMode = other.testMode;
+        easyFactor = other.easyFactor;
+        intervalDays = std::exchange(other.intervalDays, 0);
+        repetitions = std::exchange(other.repetitions, 0);
+        nextReview = std::move(other.nextReview);
+        lastReview = std::move(other.lastReview);
+        deckId = std::exchange(other.deckId, 0);
+    }
     return *this;
 }

@@ -16,6 +16,7 @@ public:
     Card();
     Card(int id, const QString &question, const QString &answer, ContentType contentType, TestMode testMode, float easyFactor, int intervalDays, int repetitions, const QDateTime &nextReview, const QDateTime &lastReview, int deckId);
     Card(const Card& other);
+    Card(Card&& other) noexcept;
     ~Card() = default;
 
     // GETTERS
@@ -46,6 +47,7 @@ public:
 
     void swap(Card& other) noexcept;
     Card& operator=(const Card& other);
+    Card& operator=(Card&& other) noexcept;
 
 private:
     int id;
