@@ -85,6 +85,7 @@ void TestCard::testParameterizedConstructor() {
     QCOMPARE(card.getDeckId(), 10);
 }
 
+
 void TestCard::testCopyConstructor() {
     QDateTime nextReview = QDateTime::currentDateTime().addDays(2);
     QDateTime lastReview = QDateTime::currentDateTime().addDays(-2);
@@ -313,7 +314,7 @@ void TestCard::testMoveEmptyObject() {
 }
 
 void TestCard::testMoveAfterCopy() {
-    // ArrangeC
+    // Arrange
     QDateTime next = QDateTime::currentDateTime().addDays(1);
     QDateTime last = QDateTime::currentDateTime().addDays(-1);
 
