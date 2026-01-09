@@ -47,4 +47,17 @@ private slots:
     // Integration tests
     void testSetAndGetConsistency();
     void testEdgeCases();
+
+    // SM2 algorithm tests
+    void testUpdateSM2FirstReview();
+    void testUpdateSM2ExcellentGrade();
+    void testUpdateSM2GoodGrade();
+    void testUpdateSM2MediumGrade();
+    void testUpdateSM2PoorGrade();
+    void testUpdateSM2FailGrade();
+    void testUpdateSM2GradeBoundaries();
+    void testUpdateSM2MultipleReviews();
+    void testUpdateSM2AfterFail();
+    void testUpdateSM2EasyFactorBounds();
+    void testUpdateSM2ScheduleProgression();
 };

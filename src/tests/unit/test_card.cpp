@@ -576,4 +576,232 @@ void TestCard::testEdgeCases() {
     QCOMPARE(card.getRepetitions(), -5);
 }
 
-//QTEST_APPLESS_MAIN(TestCard)
+
+// ==================== SM2 ALGORITHM TESTS ====================
+
+void TestCard::testUpdateSM2FirstReview()
+{
+    Card card(1, "Q", "A", ContentType::Text, TestMode::DirectAnswer,
+              2.5f, 0, 0, QDateTime(), QDateTime(), 1);
+
+    QDateTime before = QDateTime::currentDateTime().addSecs(-1);
+    card.updateSM2(4); // Хороший ответ
+
+    // Проверяем, что lastReview установлен (примерно сейчас)
+    QVERIFY(card.getLastReview() >= before);
+    QVERIFY(card.getLastReview() <= QDateTime::currentDateTime().addSecs(1));
+
+    // Первый успешный ответ: интервал = 1 день
+    QCOMPARE(card.getIntervalDays(), 1);
+    QCOMPARE(card.getRepetitions(), 1);
+
+    // nextReview должен быть через 1 день от lastReview
+    QCOMPARE(card.getNextReview(), card.getLastReview().addDays(1));
+}
+
+void TestCard::testUpdateSM2ExcellentGrade()
+{
+    Card card(1, "Q", "A", ContentType::Text, TestMode::DirectAnswer,
+              2.0f, 10, 3, QDateTime(), QDateTime(), 1);
+
+    card.updateSM2(5); // Отличный ответ
+
+    // EF должен увеличиться (но не более 2.5)
+    QVERIFY(card.getEasyFactor() >= 2.0f);
+    QVERIFY(card.getEasyFactor() <= 2.5f);
+
+    // Интервал должен увеличиться
+    QVERIFY(card.getIntervalDays() >= 10); // 10 * EF > 10
+    QCOMPARE(card.getRepetitions(), 4);
+}
+
+void TestCard::testUpdateSM2GoodGrade()
+{
+    Card card(1, "Q", "A", ContentType::Text, TestMode::DirectAnswer,
+              2.0f, 10, 3, QDateTime(), QDateTime(), 1);
+
+    float oldEF = card.getEasyFactor();
+    card.updateSM2(4); // Хороший ответ
+
+    // EF может немного измениться
+    QVERIFY(std::abs(card.getEasyFactor() - oldEF) < 0.5f);
+    QVERIFY(card.getEasyFactor() >= 1.3f);
+    QVERIFY(card.getEasyFactor() <= 2.5f);
+
+    QCOMPARE(card.getRepetitions(), 4);
+}
+
+void TestCard::testUpdateSM2MediumGrade()
+{
+    Card card(1, "Q", "A", ContentType::Text, TestMode::DirectAnswer,
+              2.0f, 10, 3, QDateTime(), QDateTime(), 1);
+
+    float oldEF = card.getEasyFactor();
+    card.updateSM2(3); // Средний ответ
+
+    // EF должен немного уменьшиться
+    QVERIFY(card.getEasyFactor() <= oldEF);
+    QVERIFY(card.getEasyFactor() >= 1.3f);
+
+    QCOMPARE(card.getRepetitions(), 4);
+}
+
+void TestCard::testUpdateSM2PoorGrade()
+{
+    Card card(1, "Q", "A", ContentType::Text, TestMode::DirectAnswer,
+              2.5f, 30, 5, QDateTime(), QDateTime(), 1);
+
+    card.updateSM2(2); // Плохой ответ (< 3)
+
+    // При grade < 3: сброс повторений, интервал = 1
+    QCOMPARE(card.getRepetitions(), 0);
+    QCOMPARE(card.getIntervalDays(), 1);
+
+    // EF сохраняется (или уменьшается, но не сбрасывается)
+    QVERIFY(card.getEasyFactor() >= 1.3f);
+    QVERIFY(card.getEasyFactor() <= 2.5f);
+}
+
+void TestCard::testUpdateSM2FailGrade()
+{
+    Card card(1, "Q", "A", ContentType::Text, TestMode::DirectAnswer,
+              2.5f, 30, 5, QDateTime(), QDateTime(), 1);
+
+    card.updateSM2(0); // Полный провал
+
+    QCOMPARE(card.getRepetitions(), 0);
+    QCOMPARE(card.getIntervalDays(), 1);
+
+    // EF должен быть в допустимых пределах
+    QVERIFY(card.getEasyFactor() >= 1.3f);
+    QVERIFY(card.getEasyFactor() <= 2.5f);
+}
+
+void TestCard::testUpdateSM2GradeBoundaries()
+{
+    // Тест граничных значений grade
+    Card card1(1, "Q", "A", ContentType::Text, TestMode::DirectAnswer,
+               2.0f, 10, 2, QDateTime(), QDateTime(), 1);
+
+    // Grade 0 (минимальный)
+    card1.updateSM2(0);
+    QCOMPARE(card1.getIntervalDays(), 1);
+    QCOMPARE(card1.getRepetitions(), 0);
+
+    Card card2(2, "Q", "A", ContentType::Text, TestMode::DirectAnswer,
+               2.0f, 10, 2, QDateTime(), QDateTime(), 1);
+
+    // Grade 5 (максимальный)
+    card2.updateSM2(5);
+    QCOMPARE(card2.getRepetitions(), 3);
+    QVERIFY(card2.getIntervalDays() > 10);
+}
+
+void TestCard::testUpdateSM2MultipleReviews()
+{
+    // Симуляция серии повторений
+    Card card(1, "Q", "A", ContentType::Text, TestMode::DirectAnswer,
+              2.5f, 0, 0, QDateTime(), QDateTime(), 1);
+
+    // День 1: первый просмотр, хороший ответ
+    card.updateSM2(4); // grade=4
+    QCOMPARE(card.getIntervalDays(), 1);
+    QCOMPARE(card.getRepetitions(), 1);
+
+    // День 2: второй просмотр (через 1 день), отличный ответ
+    card.updateSM2(5); // grade=5
+    QCOMPARE(card.getIntervalDays(), 6); // Второй повтор: всегда 6 дней
+    QCOMPARE(card.getRepetitions(), 2);
+
+    // День 8: третий просмотр (через 6 дней), хороший ответ
+    card.updateSM2(4); // grade=4
+    int expectedInterval = static_cast<int>(std::ceil(6 * card.getEasyFactor()));
+    QCOMPARE(card.getIntervalDays(), expectedInterval);
+    QCOMPARE(card.getRepetitions(), 3);
+}
+
+void TestCard::testUpdateSM2AfterFail()
+{
+    Card card(1, "Q", "A", ContentType::Text, TestMode::DirectAnswer,
+              2.5f, 30, 5, QDateTime(), QDateTime(), 1);
+
+    // Провал
+    card.updateSM2(1);
+    QCOMPARE(card.getRepetitions(), 0);
+    QCOMPARE(card.getIntervalDays(), 1);
+
+    // Затем успешный ответ
+    card.updateSM2(4);
+    QCOMPARE(card.getRepetitions(), 1);
+    QCOMPARE(card.getIntervalDays(), 1); // Первый успех после сброса = 1 день
+
+    // Еще один успешный ответ
+    card.updateSM2(4);
+    QCOMPARE(card.getRepetitions(), 2);
+    QCOMPARE(card.getIntervalDays(), 6); // Второй успех = 6 дней
+}
+
+void TestCard::testUpdateSM2EasyFactorBounds()
+{
+    // Тест, что EF всегда в пределах [1.3, 2.5]
+
+    // Минимальный EF
+    Card card1(1, "Q", "A", ContentType::Text, TestMode::DirectAnswer,
+               1.3f, 10, 3, QDateTime(), QDateTime(), 1);
+
+    // Много плохих ответов - EF должен остаться 1.3
+    for (int i = 0; i < 10; i++) {
+        card1.updateSM2(0); // Очень плохой ответ
+        QCOMPARE(card1.getEasyFactor(), 1.3f);
+        // После grade < 3 repetitions сбрасывается в 0
+        // поэтому следующая строка не "сбросит repetitions" как ожидалось
+        card1.updateSM2(3); // Средний ответ
+        QVERIFY(card1.getEasyFactor() >= 1.3f);
+        QVERIFY(card1.getEasyFactor() <= 2.5f);
+    }
+
+    // Максимальный EF
+    Card card2(2, "Q", "A", ContentType::Text, TestMode::DirectAnswer,
+               2.5f, 10, 3, QDateTime(), QDateTime(), 1);
+
+    // Много отличных ответов - EF должен остаться 2.5
+    for (int i = 0; i < 10; i++) {
+        card2.updateSM2(5); // Отличный ответ
+        QCOMPARE(card2.getEasyFactor(), 2.5f); // Должно остаться 2.5
+    }
+
+    // Тест с EF чуть ниже максимума
+    Card card3(3, "Q", "A", ContentType::Text, TestMode::DirectAnswer,
+               2.4f, 10, 3, QDateTime(), QDateTime(), 1);
+
+    for (int i = 0; i < 5; i++) {
+        float oldEF = card3.getEasyFactor();
+        card3.updateSM2(5); // Отличный ответ
+        QVERIFY(card3.getEasyFactor() >= oldEF); // EF должен увеличиться или остаться тем же
+        QVERIFY(card3.getEasyFactor() <= 2.5f);  // Но не превысить 2.5
+    }
+}
+
+void TestCard::testUpdateSM2ScheduleProgression()
+{
+    // Тест прогрессии интервалов
+    Card card(1, "Q", "A", ContentType::Text, TestMode::DirectAnswer,
+              2.0f, 0, 0, QDateTime(), QDateTime(), 1);
+
+    QList<int> intervals;
+
+    // Серия успешных повторений (grade=4)
+    for (int i = 0; i < 5; i++) {
+        card.updateSM2(4);
+        intervals.append(card.getIntervalDays());
+    }
+
+    // Интервалы должны расти: 1, 6, затем увеличиваться
+    QCOMPARE(intervals[0], 1);   // Первое повторение
+    QCOMPARE(intervals[1], 6);   // Второе повторение
+    QVERIFY(intervals[2] > 6);   // Третье повторение: 6 * EF
+    QVERIFY(intervals[3] > intervals[2]); // Четвертое: продолжает расти
+    QVERIFY(intervals[4] > intervals[3]); // Пятое: продолжает расти
+
+    qDebug() << "Interval progression:" << intervals;
+}
