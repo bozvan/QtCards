@@ -1,6 +1,6 @@
 #include "Deck.h"
 
-Deck::Deck() {}
+Deck::Deck() : id(0), name(""), cards() {}
 
 int Deck::getId()
 {

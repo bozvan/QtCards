@@ -11,7 +11,7 @@ private:
 
 public:
     Deck();
-    ~Deck();
+    ~Deck() = default;
 
     int getId();
     QString getName();
