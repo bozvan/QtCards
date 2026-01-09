@@ -79,31 +79,31 @@ public:
      * @brief Получить идентификатор карточки
      * @return Уникальный идентификатор карточки
      */
-    int getId();
+    int getId() const;
 
     /**
      * @brief Получить текст вопроса
      * @return Текст вопроса
      */
-    QString getQuestion();
+    QString getQuestion() const;
 
     /**
      * @brief Получить текст ответа
      * @return Текст ответа
      */
-    QString getAnswer();
+    QString getAnswer() const;
 
     /**
      * @brief Получить тип содержимого
      * @return Тип содержимого (ContentType enum)
      */
-    ContentType getContentType();
+    ContentType getContentType() const;
 
     /**
      * @brief Получить режим тестирования
      * @return Режим тестирования (TestMode enum)
      */
-    TestMode getTestMode();
+    TestMode getTestMode() const;
 
     /**
      * @brief Получить фактор легкости
@@ -113,13 +113,13 @@ public:
      *
      * @return Текущее значение фактора легкости
      */
-    float getEasyFactor();
+    float getEasyFactor() const;
 
     /**
      * @brief Получить текущий интервал повторения
      * @return Интервал повторения в днях
      */
-    int getIntervalDays();
+    int getIntervalDays() const;
 
     /**
      * @brief Получить количество повторений
@@ -128,25 +128,25 @@ public:
      *
      * @return Количество успешных повторений подряд
      */
-    int getRepetitions();
+    int getRepetitions() const;
 
     /**
      * @brief Получить дату следующего повторения
      * @return Дата и время следующего запланированного повторения
      */
-    QDateTime getNextReview();
+    QDateTime getNextReview() const;
 
     /**
      * @brief Получить дату последнего повторения
      * @return Дата и время последнего выполненного повторения
      */
-    QDateTime getLastReview();
+    QDateTime getLastReview() const;
 
     /**
      * @brief Получить идентификатор колоды
      * @return Идентификатор колоды, к которой принадлежит карточка
      */
-    int getDeckId();
+    int getDeckId() const;
 
     // =============== SETTERS ===============
 

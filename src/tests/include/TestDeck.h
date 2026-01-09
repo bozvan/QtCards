@@ -44,6 +44,23 @@ private slots:
     void testNegativeId();
     void testZeroId();
 
+    // Due cards tests
+    void testGetDueCardsEmptyDeck();
+    void testGetDueCardsAllDue();
+    void testGetDueCardsSomeDue();
+    void testGetDueCardsNoneDue();
+    void testGetDueCardsWithInvalidDates();
+    void testGetDueCardsMixedDates();
+
+    void testGetDueCountEmptyDeck();
+    void testGetDueCountAllDue();
+    void testGetDueCountSomeDue();
+    void testGetDueCountNoneDue();
+    void testGetDueCountConsistency(); // Проверка что getDueCount() == getDueCards().size()
+
+    void testGetDueCardsOrder(); // Если нужна сортировка
+    void testGetDueCardsPerformance(); // Для больших колод
+
 private:
     Deck* testDeck = nullptr;
     QList<Card>* testCards = nullptr;

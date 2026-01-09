@@ -88,17 +88,17 @@ Card::Card(Card&& other) noexcept :
 
 // =============== GETTERS IMPLEMENTATION ===============
 
-int Card::getId() { return id; }
-QString Card::getQuestion() { return question; }
-QString Card::getAnswer() { return answer; }
-ContentType Card::getContentType() { return contentType; }
-TestMode Card::getTestMode() { return testMode; }
-float Card::getEasyFactor() { return easyFactor; }
-int Card::getIntervalDays() { return intervalDays; }
-int Card::getRepetitions() { return repetitions; }
-QDateTime Card::getNextReview() { return nextReview; }
-QDateTime Card::getLastReview() { return lastReview; }
-int Card::getDeckId() { return deckId; }
+int Card::getId() const { return id; }
+QString Card::getQuestion() const { return question; }
+QString Card::getAnswer() const { return answer; }
+ContentType Card::getContentType() const { return contentType; }
+TestMode Card::getTestMode() const { return testMode; }
+float Card::getEasyFactor() const { return easyFactor; }
+int Card::getIntervalDays() const { return intervalDays; }
+int Card::getRepetitions() const { return repetitions; }
+QDateTime Card::getNextReview() const { return nextReview; }
+QDateTime Card::getLastReview() const { return lastReview; }
+int Card::getDeckId() const { return deckId; }
 
 // =============== SETTERS IMPLEMENTATION ===============
 
