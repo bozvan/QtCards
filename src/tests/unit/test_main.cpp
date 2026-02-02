@@ -17,14 +17,14 @@ int main(int argc, char *argv[]) {
         status |= QTest::qExec(&tc, argc, argv);
     }
 
-    // {
-    //     TestDeck td;
-    //     status |= QTest::qExec(&td, argc, argv);
-    // }
+    {
+        TestDeck td;
+        status |= QTest::qExec(&td, argc, argv);
+    }
 
-    // {
-    //     TestScheduler ts;
-    //     status |= QTest::qExec(&ts, argc, argv);
-    // }
+    {
+        TestScheduler ts;
+        status |= QTest::qExec(&ts, argc, argv);
+    }
     return status;
 }
