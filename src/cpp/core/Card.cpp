@@ -18,6 +18,7 @@ Card::Card()
     intervalDays = 0;
     repetitions = 0;
     deckId = 0;
+    isDefaultCard = true;
 }
 
 /**
@@ -40,7 +41,8 @@ Card::Card(int id, const QString &question, const QString &answer,
     repetitions(repetitions),
     nextReview(nextReview),
     lastReview(lastReview),
-    deckId(deckId)
+    deckId(deckId),
+    isDefaultCard(false)
 {}
 
 /**
@@ -60,7 +62,8 @@ Card::Card(const Card& other) :
     repetitions(other.repetitions),
     nextReview(other.nextReview),
     lastReview(other.lastReview),
-    deckId(other.deckId)
+    deckId(other.deckId),
+    isDefaultCard(false)
 {}
 
 /**
@@ -83,7 +86,8 @@ Card::Card(Card&& other) noexcept :
     repetitions(std::exchange(other.repetitions, 0)),
     nextReview(std::move(other.nextReview)),
     lastReview(std::move(other.lastReview)),
-    deckId(std::exchange(other.deckId, 0))
+    deckId(std::exchange(other.deckId, 0)),
+    isDefaultCard(false)
 {}
 
 // =============== GETTERS IMPLEMENTATION ===============
@@ -171,6 +175,25 @@ Card& Card::operator=(Card&& other) noexcept
     return *this;
 }
 
+bool Card::operator==(const Card& other) const
+{
+    if (this->id == other.id && this->question == other.question && this->answer == other.answer &&
+        this->contentType == other.contentType && this->testMode == other.testMode &&
+        this->easyFactor == other.easyFactor && this->intervalDays == other.intervalDays &&
+        this->repetitions == other.repetitions && this->nextReview == other.nextReview &&
+        this->lastReview == other.lastReview && this->deckId == other.deckId)
+    {
+        return true;
+    }
+    return false;
+}
+
+bool Card::operator!=(const Card& other) const
+{
+    return !(*this==other);
+}
+
+
 /**
  * @brief Обновить состояние карточки по алгоритму SM2
  *
@@ -229,13 +252,18 @@ void Card::updateSM2(int grade)
     float newEF = easyFactor + (0.1f - (5.0f - quality) * (0.08f + (5.0f - quality) * 0.02f));
 
     // Ограничение easyFactor в диапазоне [1.3, 2.5]
-    if (newEF < 1.3f) {
-        newEF = 1.3f;   // Нижняя граница
-    } else if (newEF > 2.5f) {
-        newEF = 2.5f;   // Верхняя граница
-    }
-    easyFactor = newEF;
+    easyFactor = qBound(1.3f, newEF, 2.5f);
 
     // Шаг 6: Установка даты следующего повторения
     nextReview = lastReview.addDays(intervalDays);
+}
+
+/**
+ * @brief Проверка на пустой объект
+ * (созданный с помощью конструктора без параметров)
+ * @return Результат (true / false)
+ */
+bool Card::isDefault() const
+{
+    return isDefaultCard;
 }

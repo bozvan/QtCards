@@ -244,6 +244,20 @@ public:
     Card& operator=(Card&& other) noexcept;
 
     /**
+     * @brief Оператор сравнение
+     * @param other Карточка для сравнения
+     * @return Результат сравнения (true / false)
+     */
+    bool operator==(const Card& other) const;
+
+    /**
+     * @brief Оператор сравнение
+     * @param other Карточка для сравнения
+     * @return Результат сравнения (true / false)
+     */
+    bool operator!=(const Card& other) const;
+
+    /**
      * @brief Обновить состояние карточки по алгоритму SM2
      *
      * Алгоритм SuperMemo 2 (SM2) для интервального повторения:
@@ -265,7 +279,15 @@ public:
      *
      * @see https://www.supermemo.com/en/archives1990-2015/english/ol/sm2
      */
+
     void updateSM2(int grade);
+
+    /**
+     * @brief Проверка на пустой объект
+     * (созданный с помощью конструктора без параметров)
+     * @return Результат (true / false)
+     */
+    bool isDefault() const;
 
 private:
     int id;                     ///< Уникальный идентификатор карточки
@@ -279,4 +301,5 @@ private:
     QDateTime nextReview;       ///< Дата следующего повторения
     QDateTime lastReview;       ///< Дата последнего повторения
     int deckId;                 ///< Идентификатор колоды
+    bool isDefaultCard;         ///< Метка стандартного объекта Card
 };
