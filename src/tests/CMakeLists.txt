@@ -1,37 +1,29 @@
 cmake_minimum_required(VERSION 3.16)
 
 if(BUILD_TESTS)
-    find_package(Qt6 REQUIRED COMPONENTS Core Test)
-    
-    # Включить автоматическое создание MOC
-    set(CMAKE_AUTOMOC ON)
+    find_package(Qt6 REQUIRED COMPONENTS Core Test Sql)
 
-    # Создаем исполняемый файл тестов
+    file(GLOB_RECURSE CORE_SOURCES "../cpp/core/*.cpp")
+    file(GLOB_RECURSE TEST_HEADERS "include/*.h")
+    file(GLOB_RECURSE TEST_SOURCES "unit/*.cpp")
+
     add_executable(CardTests
-        ../cpp/models/Card.cpp
-        ../cpp/models/Deck.cpp
-        unit/test_card.cpp
-        unit/test_main.cpp
-        unit/test_deck.cpp
-        include/TestDeck.h
-        include/TestCard.h
+        ${CORE_SOURCES}
+        ${TEST_HEADERS}
+        ${TEST_SOURCES}
     )
     
-    # Линкуем с нашей библиотекой и Qt
     target_link_libraries(CardTests
         Qt6::Core
         Qt6::Test
+        Qt6::Sql
     )
     
-    # Указываем include директории
     target_include_directories(CardTests PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_SOURCE_DIR}/include
-        ${CMAKE_SOURCE_DIR}/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/../include
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     
-    # Добавляем тест в CTest
     add_test(NAME CardUnitTests COMMAND CardTests)
     
 endif()
